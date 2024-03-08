@@ -1,11 +1,24 @@
-import { Button } from '@chakra-ui/react'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { getAllRecords } from './utils/supabaseFunctions';
 
-function App() {
+const App = () =>{
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  const [records, setRecords] = useState<any>([]);
+
+  useEffect(()=>{
+    const getRecords = async()=>{
+      const records = await getAllRecords()
+      setRecords(records)
+      console.log(records)
+    };
+    getRecords();
+    
+  },[])
 
   return (
     <>
-      <Button colorScheme='blue'>Button</Button>
+      <h1 color='#f20' >学習記録アプリ</h1>
     </>
   )
 }
