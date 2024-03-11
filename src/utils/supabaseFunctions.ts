@@ -14,3 +14,16 @@ return recordsData
         return [];
     }
 }
+
+export async function addAllRecords(studyContent: string, studyTime: number) {
+    const response = await supabase
+        .from('study-record')
+        .insert([
+            { studyContent, studyTime },
+        ])
+        .select()
+    if (response.data !== null) {
+        return (response.data[0])
+    }
+
+}

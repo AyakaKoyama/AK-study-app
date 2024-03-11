@@ -4,28 +4,29 @@ export class Record {
     constructor
     ( 
         public id : string,
-        public contents: string,
-        public time: boolean,
-        public created_at : string
+        public studyContent: string,
+        public studyTime: number,
+        public createDate : string
     ){}
 
 //クラスごとに機能を持たせる(Dateを成形した状態で持っておく)
 public static newRecord (
     id : string,
-    contents: string,
-    time: boolean,
-    created_at : string
+    studyContent: string,
+    studyTime: number,
+    createDate : string
 
 ):Record{
     return new Record(
         id,
-        contents,
-        time,
-        formatDate(created_at)
+        studyContent,
+        studyTime,
+        formatDate(createDate)
     )
 }    
 }
 
+//日付成型
 function formatDate(dateString: string): string {
     const date = new Date(dateString);
     const year = date.getFullYear();
