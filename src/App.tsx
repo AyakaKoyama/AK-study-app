@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { addAllRecords, getAllRecords } from './utils/supabaseFunctions';
-import {
+import {Modal, ModalOverlay, ModalContent,  ModalHeader, ModalCloseButton, ModalBody, Stack, FormControl, FormLabel, Input, ModalFooter,
   Table,Thead,Tbody,Tr,Th,TableCaption,TableContainer,Td, Spinner,  useDisclosure, Button, } from '@chakra-ui/react'
 import { Record } from './domain/record';
-import { ModalDetail } from './Props/ModalDetail';
 
 
 function App (){
@@ -67,12 +66,8 @@ function App (){
   const onChangeStudyTime = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
     const time = parseInt(inputValue); // 数値に変換
-    console.log(time)
-  if (!isNaN(time)) { // time が NaN でないことを確認
     setStudyTime(time); // studyTime ステートを更新
-  } else {
-   console.log(time)
-  }
+    console.log(time)
   };
   
   return (
@@ -102,8 +97,31 @@ function App (){
 
   </Table>
 </TableContainer>
-<ModalDetail isOpen = {isOpen} onClose = {onClose} onAddRecord={onAddRecord}
-onChangeStudyContent={onChangeStudyContent} studyContent={studyContent} onChangeStudyTime={onChangeStudyTime} studyTime={studyTime}/>
+
+<Modal isOpen = {isOpen} onClose = {onClose} autoFocus={false} motionPreset='slideInBottom'>
+  <ModalOverlay>
+    <ModalContent pb={6}>
+      <ModalHeader>学習記録</ModalHeader>
+      <ModalCloseButton/>
+      <ModalBody mx={4}>
+        <Stack spacing ={4}>
+          <FormControl>
+            <FormLabel>学習内容</FormLabel>
+            <Input value={studyContent}  onChange={onChangeStudyContent}/>
+          </FormControl>
+          <FormControl>
+            <FormLabel>学習時間</FormLabel>
+            <Input type="number" value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
+          </FormControl>
+        </Stack>
+      </ModalBody>
+      <ModalFooter>
+        <Button colorScheme='blue' mr={3} onClick={onAddRecord}> 登録</Button>
+        <Button onClick={onClose}>キャンセル</Button>
+      </ModalFooter>
+    </ModalContent>
+  </ModalOverlay>
+</Modal>
     </>
   )
 }
