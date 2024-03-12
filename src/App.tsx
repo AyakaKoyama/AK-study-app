@@ -13,8 +13,7 @@ function App (){
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [studyContent, setStudyContent]=useState(``);
   const [studyTime, setStudyTime]=useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [error, setError]=useState(``);
+  
   
   
   //ひとまずデータ取得のみ
@@ -39,16 +38,13 @@ function App (){
   //登録ボタン押下
   const onAddRecord = async () => {
     if (!studyTime && !studyContent) {
-      setError("入力されていない項目があります。");
       return;
     }
 
     if (studyContent === "") {
-      setError("学習内容を入力してください");
       return;
     }
     if (!studyTime) {
-      setError("学習時間を入力してください");
       return;
     }
     //データ追加(supabase)
@@ -58,17 +54,15 @@ function App (){
       setRecords([...records, newRecord]);
       setStudyContent("");
       setStudyTime(0);
-      setError("");
+      onClose(); // モーダルを閉じる
     } catch (error) {
       console.error("Error adding record:", error);
-      setError("レコードの追加中にエラーが発生しました");
     }
   };
 
   const onChangeStudyContent = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputContent = event.target.value;
     setStudyContent(inputContent);
-    setError(""); //値が入力されたらエラーを初期化し非表示にする
   };
   const onChangeStudyTime = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
@@ -76,9 +70,8 @@ function App (){
     console.log(time)
   if (!isNaN(time)) { // time が NaN でないことを確認
     setStudyTime(time); // studyTime ステートを更新
-    setError(""); // エラーを初期化
   } else {
-    setError("学習時間は数値で入力してください"); // エラーメッセージを表示
+   console.log(time)
   }
   };
   
