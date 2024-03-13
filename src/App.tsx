@@ -3,16 +3,23 @@ import { addAllRecords, getAllRecords } from './utils/supabaseFunctions';
 import {Modal, ModalOverlay, ModalContent,  ModalHeader, ModalCloseButton, ModalBody, Stack, FormControl, FormLabel, Input, ModalFooter,
   Table,Thead,Tbody,Tr,Th,TableCaption,TableContainer,Td, Spinner,  useDisclosure, Button, } from '@chakra-ui/react'
 import { Record } from './domain/record';
+import { useForm, SubmitHandler } from "react-hook-form";
+
+interface IFormInputs {
+  studyContent: string
+  studyTime: number
+}
+
 
 
 function App (){
 
+  const { register, formState: { errors }, handleSubmit } = useForm<IFormInputs>();
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true)
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [studyContent, setStudyContent]=useState(``);
   const [studyTime, setStudyTime]=useState(0);
-  
   
   
   //ひとまずデータ取得のみ
@@ -34,30 +41,28 @@ function App (){
   //登録ボタン押したらモーダル表示
   const onClickAdd = ()=> onOpen()
 
-  //登録ボタン押下
-  const onAddRecord = async () => {
-    if (!studyTime && !studyContent) {
-      return;
-    }
-
-    if (studyContent === "") {
-      return;
-    }
-    if (!studyTime) {
-      return;
-    }
-    //データ追加(supabase)
+  //エラー表示
+  const onSubmit: SubmitHandler<IFormInputs> = async data => {
+    console.log(data); // フォームデータをログに出力
     try {
-      const data = await addAllRecords(studyContent, studyTime);
-      const newRecord = { id: data.id, studyContent: studyContent, studyTime: studyTime,createDate:data.created_at };
-      setRecords([...records, newRecord]);
-      setStudyContent("");
-      setStudyTime(0);
-      onClose(); // モーダルを閉じる
+      if (!data.studyContent && data.studyTime===0) {
+        console.log(data.studyTime)
+        throw new Error('内容と時間の入力は必須です');
+      }
+     //データ追加(supabase)
+    const addedData = await addAllRecords(data.studyContent, data.studyTime);
+    const newRecord = { id: addedData.id, studyContent: data.studyContent, studyTime: data.studyTime, createDate: addedData.created_at };
+    setRecords([...records, newRecord]);
+    setStudyContent("");
+    setStudyTime(0);
+    onClose(); // モーダルを閉じる
     } catch (error) {
-      console.error("Error adding record:", error);
+      // エラーメッセージを表示
+      console.error('Failed to submit form data:', error);
     }
   };
+
+  
 
   const onChangeStudyContent = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputContent = event.target.value;
@@ -65,10 +70,16 @@ function App (){
   };
   const onChangeStudyTime = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
-    const time = parseInt(inputValue); // 数値に変換
-    setStudyTime(time); // studyTime ステートを更新
-    console.log(time)
+    if (/^\d*$/.test(inputValue)) { // 入力値が数値であることを確認
+      const time = parseInt(inputValue); // 数値に変換
+      if (time > 0) { // 0以外の場合のみ設定
+        setStudyTime(time);
+      } else {
+        setStudyTime(0); // 負の値の場合は0に設定
+      }
+  }
   };
+  
   
   return (
     <>
@@ -103,27 +114,34 @@ function App (){
     <ModalContent pb={6}>
       <ModalHeader>学習記録</ModalHeader>
       <ModalCloseButton/>
+      <form onSubmit={handleSubmit(onSubmit)}>
       <ModalBody mx={4}>
         <Stack spacing ={4}>
           <FormControl>
             <FormLabel>学習内容</FormLabel>
-            <Input value={studyContent}  onChange={onChangeStudyContent}/>
+            <Input {...register("studyContent", { required: true })} value={studyContent}  onChange={onChangeStudyContent}/>
+            {errors.studyContent && "内容の入力は必須です"}
           </FormControl>
           <FormControl>
             <FormLabel>学習時間</FormLabel>
-            <Input type="number" value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
+            <Input type="number" {...register("studyTime", { required: true, min: { value: 0, message: "0以上で入力してください" } })} value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
+            {errors.studyTime && "時間の入力は必須です"}
           </FormControl>
         </Stack>
       </ModalBody>
       <ModalFooter>
-        <Button colorScheme='blue' mr={3} onClick={onAddRecord}> 登録</Button>
+        <Button type="submit" colorScheme='blue' mr={3} > 登録</Button>
         <Button onClick={onClose}>キャンセル</Button>
       </ModalFooter>
+      </form>
     </ModalContent>
   </ModalOverlay>
 </Modal>
+
     </>
   )
 }
 
 export default App;
+
+
