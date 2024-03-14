@@ -10,17 +10,14 @@ interface IFormInputs {
   studyTime: number
 }
 
-
-
 function App (){
 
-  const { register, formState: { errors }, handleSubmit } = useForm<IFormInputs>();
+  const { register, reset, formState: { errors }, handleSubmit } = useForm<IFormInputs>();
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true)
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [studyContent, setStudyContent]=useState(``);
   const [studyTime, setStudyTime]=useState(0);
-  
   
   //ひとまずデータ取得のみ
   useEffect(()=>{
@@ -45,22 +42,20 @@ function App (){
   const onSubmit: SubmitHandler<IFormInputs> = async data => {
     console.log(data); // フォームデータをログに出力
     try {
-      if (!data.studyContent && data.studyTime===0) {
-        console.log(data.studyTime)
-        throw new Error('内容と時間の入力は必須です');
-      }
      //データ追加(supabase)
     const addedData = await addAllRecords(data.studyContent, data.studyTime);
     const newRecord = { id: addedData.id, studyContent: data.studyContent, studyTime: data.studyTime, createDate: addedData.created_at };
     setRecords([...records, newRecord]);
-    setStudyContent("");
-    setStudyTime(0);
-    onClose(); // モーダルを閉じる
+    //ここでリセット
+    reset({ studyContent: '' })
+    reset({ studyTime: 0 })
+    onClose(); 
     } catch (error) {
       // エラーメッセージを表示
       console.error('Failed to submit form data:', error);
     }
   };
+  console.log(studyTime, studyContent)
 
   
 
@@ -72,11 +67,7 @@ function App (){
     const inputValue = event.target.value;
     if (/^\d*$/.test(inputValue)) { // 入力値が数値であることを確認
       const time = parseInt(inputValue); // 数値に変換
-      if (time > 0) { // 0以外の場合のみ設定
-        setStudyTime(time);
-      } else {
-        setStudyTime(0); // 負の値の場合は0に設定
-      }
+      setStudyTime(time);
   }
   };
   
@@ -109,7 +100,12 @@ function App (){
   </Table>
 </TableContainer>
 
-<Modal isOpen = {isOpen} onClose = {onClose} autoFocus={false} motionPreset='slideInBottom'>
+<Modal 
+  isOpen = {isOpen} 
+  onClose={() => {
+  reset();}} 
+  autoFocus={false} 
+  motionPreset='slideInBottom'>
   <ModalOverlay>
     <ModalContent pb={6}>
       <ModalHeader>学習記録</ModalHeader>
@@ -124,14 +120,18 @@ function App (){
           </FormControl>
           <FormControl>
             <FormLabel>学習時間</FormLabel>
-            <Input type="number" {...register("studyTime", { required: true, min: { value: 0, message: "0以上で入力してください" } })} value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
-            {errors.studyTime && "時間の入力は必須です"}
+            <Input type="number" {...register("studyTime", { required: true,valueAsNumber: true, min: {  value: 1, message: "0以上で入力してください" } })} value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
+            {errors.studyTime && "0以上で入力してください" }
           </FormControl>
         </Stack>
       </ModalBody>
       <ModalFooter>
         <Button type="submit" colorScheme='blue' mr={3} > 登録</Button>
-        <Button onClick={onClose}>キャンセル</Button>
+        <Button 
+          onClick={() => {
+          onClose();
+          reset();
+        }}>キャンセル</Button>
       </ModalFooter>
       </form>
     </ModalContent>
