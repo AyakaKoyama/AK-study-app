@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { addAllRecords, getAllRecords } from './utils/supabaseFunctions';
+import { addAllRecords, deleteRecords, getAllRecords } from './utils/supabaseFunctions';
 import {Modal, ModalOverlay, ModalContent,  ModalHeader, ModalCloseButton, ModalBody, Stack, FormControl, FormLabel, Input, ModalFooter,
-  Table,Thead,Tbody,Tr,Th,TableCaption,TableContainer,Td, Spinner,  useDisclosure, Button, } from '@chakra-ui/react'
+  Table,Thead,Tbody,Tr,Th,TableCaption,TableContainer,Td, Spinner,  useDisclosure, Button, Text, } from '@chakra-ui/react'
 import { Record } from './domain/record';
 import { useForm, SubmitHandler } from "react-hook-form";
 
@@ -25,7 +25,7 @@ function App (){
       try {
         const record = await getAllRecords();
         setRecords(record);
-        console.log(record);
+        //console.log(record);
       } catch (error) {
         console.error('Failed to fetch records:', error);
       } finally {
@@ -38,9 +38,8 @@ function App (){
   //登録ボタン押したらモーダル表示
   const onClickAdd = ()=> onOpen()
 
-  //エラー表示
   const onSubmit: SubmitHandler<IFormInputs> = async data => {
-    console.log(data); // フォームデータをログに出力
+    console.log(data); 
     try {
      //データ追加(supabase)
     const addedData = await addAllRecords(data.studyContent, data.studyTime);
@@ -49,9 +48,9 @@ function App (){
     //ここでリセット
     reset({ studyContent: '' })
     reset({ studyTime: 0 })
+    //モーダルを閉じる
     onClose(); 
     } catch (error) {
-      // エラーメッセージを表示
       console.error('Failed to submit form data:', error);
     }
   };
@@ -70,30 +69,43 @@ function App (){
       setStudyTime(time);
   }
   };
+
+  const onClickDelete= async (id: string) => {
+    try {
+      await deleteRecords(id);
+      const newRecords = records.filter((r) => r.id !== id);
+      setRecords(newRecords);
+    } catch (error) {
+      console.error("Error deleting record:", error);
+    }
+  };
   
   
   return (
     <>
-      <h1 color='#f20' >学習記録アプリ</h1>
-      {loading && <Spinner thickness='4px' speed='0.65s' emptyColor='gray.200' color='blue.500' size='xl' />} 
-      <Button onClick={onClickAdd}>登録</Button>
+      <Text data-testid="title" fontSize='3xl' >学習記録アプリ</Text>
+      {loading && <Spinner data-testid="loading" thickness='4px' speed='0.65s' emptyColor='gray.200' color='blue.500' size='xl' />} 
+      <Button data-testid="new-submit" onClick={onClickAdd}  colorScheme='teal'>新規登録</Button>
 <TableContainer>
-  <Table variant='simple'>
-    <TableCaption>学習記録</TableCaption>
+  <Table data-testid="table" variant='simple'>
+    <TableCaption >学習記録</TableCaption>
     <Thead>
       <Tr>
-        <Th>学習内容</Th>
-        <Th>学習時間</Th>
+        <Th data-testid="column1">学習内容</Th>
+        <Th data-testid="column2">学習時間</Th>
         <Th>日付</Th>
       </Tr>
     </Thead>
     <Tbody>
     {records.map((record) => (
-              <Tr key={record.id}>
-                <Td>{record.studyContent}</Td>
-                <Td>{record.studyTime}</Td>
-                <Td>{record.createDate}</Td>
-              </Tr>
+      <>
+      <Tr key={record.id}>
+        <Td>{record.studyContent}</Td>
+        <Td>{record.studyTime}</Td>
+        <Td>{record.createDate}</Td>
+      </Tr>
+      <Button onClick={() => onClickDelete(record.id) } colorScheme='teal' variant='outline'>削除</Button>
+      </>
             ))}
     </Tbody>
 
@@ -102,8 +114,7 @@ function App (){
 
 <Modal 
   isOpen = {isOpen} 
-  onClose={() => {
-  reset();}} 
+  onClose={onClose} 
   autoFocus={false} 
   motionPreset='slideInBottom'>
   <ModalOverlay>
