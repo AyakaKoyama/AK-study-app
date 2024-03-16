@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import '@testing-library/jest-dom'
 import App from "../App";
 //import { Record } from "../domain/record";
@@ -50,6 +50,40 @@ describe("App", () => {
         const newSubmit = screen.getByTestId("new-submit")
         expect(newSubmit).toHaveTextContent("新規登録");
 });
+    
+    test("モーダルのtitleが表示されること", async() => {
+        render(<App />);
+        const newSubmitButton = screen.getByTestId("new-submit");
+        fireEvent.click(newSubmitButton);
+        await waitFor(()=>{
+        const modalTitle = screen.getByTestId("modal-title")
+        expect(modalTitle).toHaveTextContent("学習記録");
+        })
+});
+
+    test("学習内容と学習時間を登録できる", async () => {
+    render(<App />);
+    await waitFor(()=>screen.getByTestId("modal-title"))
+
+    // 学習内容と時間の入力フィールドを取得
+    const contentInput = screen.getByTestId("study-content-input");
+    const timeInput = screen.getByTestId("study-time-input");
+
+    // 学習内容と時間を入力
+    fireEvent.change(contentInput, { target: { value: "テスト学習内容" } });
+    fireEvent.change(timeInput, { target: { value: "10" } });
+
+    // 登録ボタンをクリック
+    const submitButton = screen.getByTestId("submit");
+    fireEvent.click(submitButton);
+
+    // 新しい学習記録がリストに追加されたことを確認
+    await waitFor(() => {
+        const newRecord = screen.getByText("テスト学習内容 10時間");
+        expect(newRecord).toBeInTheDocument();
+    });
+});
+
 
 
 });

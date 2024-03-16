@@ -113,31 +113,32 @@ function App (){
 </TableContainer>
 
 <Modal 
+  data-testid="modal"
   isOpen = {isOpen} 
   onClose={onClose} 
   autoFocus={false} 
   motionPreset='slideInBottom'>
   <ModalOverlay>
     <ModalContent pb={6}>
-      <ModalHeader>学習記録</ModalHeader>
+      <ModalHeader data-testid="modal-title">学習記録</ModalHeader>
       <ModalCloseButton/>
       <form onSubmit={handleSubmit(onSubmit)}>
       <ModalBody mx={4}>
         <Stack spacing ={4}>
           <FormControl>
             <FormLabel>学習内容</FormLabel>
-            <Input {...register("studyContent", { required: true })} value={studyContent}  onChange={onChangeStudyContent}/>
+            <Input data-testid="study-content-input" {...register("studyContent", { required: true })} value={studyContent}  onChange={onChangeStudyContent}/>
             {errors.studyContent && "内容の入力は必須です"}
           </FormControl>
           <FormControl>
             <FormLabel>学習時間</FormLabel>
-            <Input type="number" {...register("studyTime", { required: true,valueAsNumber: true, min: {  value: 1, message: "0以上で入力してください" } })} value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
+            <Input data-testid="study-time-input" type="number" {...register("studyTime", { required: true,valueAsNumber: true, min: {  value: 1, message: "0以上で入力してください" } })} value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
             {errors.studyTime && "0以上で入力してください" }
           </FormControl>
         </Stack>
       </ModalBody>
       <ModalFooter>
-        <Button type="submit" colorScheme='blue' mr={3} > 登録</Button>
+        <Button data-testid="submit" type="submit" colorScheme='blue' mr={3} > 登録</Button>
         <Button 
           onClick={() => {
           onClose();
