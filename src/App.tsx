@@ -96,15 +96,20 @@ function App (){
       </Tr>
     </Thead>
     <Tbody>
-    {records.map((record) => (
-      <>
+    {records.map((record) => (      
       <Tr key={record.id}>
         <Td>{record.studyContent}</Td>
         <Td>{record.studyTime}</Td>
         <Td>{record.createDate}</Td>
+        <Td>
+          <Button 
+          data-testid="delete" 
+          onClick={() => onClickDelete(record.id) } 
+          colorScheme='teal' 
+          variant='outline'>削除
+          </Button>
+        </Td>
       </Tr>
-      <Button data-testid="delete" onClick={() => onClickDelete(record.id) } colorScheme='teal' variant='outline'>削除</Button>
-      </>
             ))}
     </Tbody>
 

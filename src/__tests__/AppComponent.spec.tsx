@@ -12,16 +12,14 @@ import { Record } from "../domain/record";
 const mockGetAllRecords = jest
 .fn()
 .mockResolvedValue([ new Record("1", "テスト", 3, "2024-03-16 09:30:48.200885")]  )
-jest.mock("../utils/supabaseFunctions", ()=>{
-    return{
-        getAllRecords:()=>mockGetAllRecords(),
-    }})
 
 const mockDeleteRecords = jest
 .fn()
 .mockResolvedValue([]);
+
 jest.mock("../utils/supabaseFunctions", () => {
     return{
+        getAllRecords:()=>mockGetAllRecords(),
         deleteRecords: () => mockDeleteRecords(),
     }});
 
@@ -41,10 +39,12 @@ describe("App", () => {
 
     test("Loadingがあること", async() => {
         render(<App />);
-        await waitFor(()=>screen.getByTestId("table"))
-        //await waitFor(() => screen.getByTestId("loading"));
-        const loading = screen.getByTestId("loading")
-        expect(loading).toBeInTheDocument();
+        await waitFor(() => {
+            const loading = screen.getByTestId("loading")
+            expect(loading).toBeInTheDocument();
+        }
+        );
+        
     });
 
     test("column1が学習内容であること", async() => {
