@@ -54,7 +54,6 @@ function App (){
       console.error('Failed to submit form data:', error);
     }
   };
-  console.log(studyTime, studyContent)
 
   
 
@@ -104,7 +103,7 @@ function App (){
         <Td>{record.studyTime}</Td>
         <Td>{record.createDate}</Td>
       </Tr>
-      <Button onClick={() => onClickDelete(record.id) } colorScheme='teal' variant='outline'>削除</Button>
+      <Button data-testid="delete" onClick={() => onClickDelete(record.id) } colorScheme='teal' variant='outline'>削除</Button>
       </>
             ))}
     </Tbody>

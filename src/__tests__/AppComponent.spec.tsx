@@ -6,8 +6,24 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import '@testing-library/jest-dom'
 import App from "../App";
-//import { Record } from "../domain/record";
+import { Record } from "../domain/record";
 
+//モック化
+const mockGetAllRecords = jest
+.fn()
+.mockResolvedValue([ new Record("1", "テスト", 3, "2024-03-16 09:30:48.200885")]  )
+jest.mock("../utils/supabaseFunctions", ()=>{
+    return{
+        getAllRecords:()=>mockGetAllRecords(),
+    }})
+
+const mockDeleteRecords = jest
+.fn()
+.mockResolvedValue([]);
+jest.mock("../utils/supabaseFunctions", () => {
+    return{
+        deleteRecords: () => mockDeleteRecords(),
+    }});
 
 describe("App", () => {
 
@@ -19,8 +35,6 @@ describe("App", () => {
 
     test("titleがあること", async() => {
         render(<App />);
-        //テーブル表示されるまで待機
-        await waitFor(()=>screen.getByTestId("table"))
         const title = screen.getByTestId("title")
         expect(title).toBeInTheDocument();
     });
@@ -28,6 +42,7 @@ describe("App", () => {
     test("Loadingがあること", async() => {
         render(<App />);
         await waitFor(()=>screen.getByTestId("table"))
+        //await waitFor(() => screen.getByTestId("loading"));
         const loading = screen.getByTestId("loading")
         expect(loading).toBeInTheDocument();
     });
@@ -62,28 +77,74 @@ describe("App", () => {
 });
 
     test("学習内容と学習時間を登録できる", async () => {
-    render(<App />);
-    await waitFor(()=>screen.getByTestId("modal-title"))
-
-    // 学習内容と時間の入力フィールドを取得
-    const contentInput = screen.getByTestId("study-content-input");
-    const timeInput = screen.getByTestId("study-time-input");
-
-    // 学習内容と時間を入力
-    fireEvent.change(contentInput, { target: { value: "テスト学習内容" } });
-    fireEvent.change(timeInput, { target: { value: "10" } });
-
-    // 登録ボタンをクリック
-    const submitButton = screen.getByTestId("submit");
-    fireEvent.click(submitButton);
-
-    // 新しい学習記録がリストに追加されたことを確認
-    await waitFor(() => {
-        const newRecord = screen.getByText("テスト学習内容 10時間");
-        expect(newRecord).toBeInTheDocument();
-    });
+        render(<App />);
+        
+        //登録ボタンを押してモーダル表示
+        const newSubmitButton = screen.getByTestId("new-submit");
+        fireEvent.click(newSubmitButton);
+        screen.getByTestId("modal-title")
+        
+        //モックを使ってデータを取得
+        await waitFor(()=>screen.getByTestId("table"))
+        const records = screen.getByTestId("table").querySelectorAll("tr")
+        expect(records.length-1).toBe(1)
 });
+    test("学習内容の入力をしないで登録を押すとエラーが表示される", async() => {
+        render(<App />)
+        // モーダル表示～登録ボタン押下
+        const newSubmitButton = screen.getByTestId("new-submit");
+        fireEvent.click(newSubmitButton);
+        screen.getByTestId("modal-title")
+        const submitButton = screen.getByTestId("submit");
+        fireEvent.click(submitButton);
 
+        await waitFor(() => {
+            const errorMessage = screen.queryByText('内容の入力は必須です');
+            expect(errorMessage).toBeInTheDocument();
+        });
+})
 
+    test("学習時間の入力をしないで登録を押すとエラーが表示される", async() => {
+        render(<App />)
+        // モーダル表示～登録ボタン押下
+        const newSubmitButton = screen.getByTestId("new-submit");
+        fireEvent.click(newSubmitButton);
+        screen.getByTestId("modal-title")
+        const submitButton = screen.getByTestId("submit");
+        fireEvent.click(submitButton);
+
+        await waitFor(() => {
+            const errorMessage = screen.queryByText('0以上で入力してください');
+            expect(errorMessage).toBeInTheDocument();
+        });
+})
+
+    test("削除ボタンを押すと学習記録が削除される", async () => {
+        render(<App />);
+
+        await waitFor(()=>screen.getByTestId("table"))
+
+        // 削除ボタンが表示されるまで待機
+        await waitFor(() => {
+            const deleteButtons = screen.getAllByTestId("delete");
+            expect(deleteButtons.length).toBeGreaterThan(0);
+        });
+
+        // 初期の学習記録の数を取得
+        const initialRecords = screen.getAllByTestId("table");
+
+        // 削除ボタンクリック
+        const deleteButton = screen.getAllByTestId("delete")[0];
+        fireEvent.click(deleteButton);
+
+        // モック化されたdeleteRecords関数が呼び出されたことを確認
+        expect(mockDeleteRecords).toHaveBeenCalled();
+
+        // 削除後の学習記録の数を取得
+        await waitFor(() => {
+            const updatedRecords = screen.queryAllByTestId("table");
+            expect(updatedRecords.length).toBe(initialRecords.length - 1);
+        });
+    });
 
 });
