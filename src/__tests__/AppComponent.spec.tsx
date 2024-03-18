@@ -122,20 +122,22 @@ describe("App", () => {
     test("削除ボタンを押すと学習記録が削除される", async () => {
         render(<App />);
 
-        await waitFor(()=>screen.getByTestId("table"))
-
         // 削除ボタンが表示されるまで待機
         await waitFor(() => {
             const deleteButtons = screen.getAllByTestId("delete");
+            console.log("削除ボタンの数:", deleteButtons.length);
             expect(deleteButtons.length).toBeGreaterThan(0);
         });
 
         // 初期の学習記録の数を取得
-        const initialRecords = screen.getAllByTestId("table");
+        const initialRecords = screen.getByTestId("table").querySelectorAll("tr");
+        console.log("初期の学習記録の数:", initialRecords.length);
+        screen.debug()
 
         // 削除ボタンクリック
         const deleteButton = screen.getAllByTestId("delete")[0];
         fireEvent.click(deleteButton);
+        
 
         // モック化されたdeleteRecords関数が呼び出されたことを確認
         expect(mockDeleteRecords).toHaveBeenCalled();
@@ -143,6 +145,7 @@ describe("App", () => {
         // 削除後の学習記録の数を取得
         await waitFor(() => {
             const updatedRecords = screen.queryAllByTestId("table");
+            console.log("削除後の学習記録の数:", updatedRecords.length);
             expect(updatedRecords.length).toBe(initialRecords.length - 1);
         });
     });

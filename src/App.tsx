@@ -97,7 +97,7 @@ function App (){
     </Thead>
     <Tbody>
     {records.map((record) => (      
-      <Tr key={record.id}>
+      <Tr data-testid="tr" key={record.id}>
         <Td>{record.studyContent}</Td>
         <Td>{record.studyTime}</Td>
         <Td>{record.createDate}</Td>
