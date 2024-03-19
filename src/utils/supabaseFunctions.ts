@@ -34,3 +34,14 @@ export const deleteRecords = async (id: string) => {
         .match({ id });
 };
 
+export async function updateRecord(id: string, studyContent: string, studyTime: number) {
+    const response = await supabase
+        .from('study-record')
+        .update({ studyContent, studyTime })
+        .match({ id });
+
+    if (response.data!==null) {
+        return (response.data[0])
+    }
+}
+
