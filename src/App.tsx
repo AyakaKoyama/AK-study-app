@@ -20,6 +20,9 @@ function App (){
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [studyContent, setStudyContent]=useState(``);
   const [studyTime, setStudyTime]=useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editRecords, setEditRecords] = useState<Record | null>(null);
   
   //ひとまずデータ取得のみ
   useEffect(()=>{
@@ -38,7 +41,15 @@ function App (){
   }, []);
 
   //登録ボタン押したらモーダル表示
-  const onClickAdd = ()=> onOpen()
+  const onClickAdd = ()=> {
+    setShowEditModal(false);
+    //ここで初期化しているのにうまくいってない？
+    setEditRecords(null);
+    reset({ studyContent: '', studyTime: 0 })
+    console.log("Form reset");
+    onOpen()
+    console.log(editRecords)
+    }
 
   //編集ボタン
   const onClickEdit = (id: string)=>{
@@ -46,9 +57,14 @@ function App (){
     if(editRecord) {
       setStudyContent(editRecord.studyContent);
       setStudyTime(editRecord.studyTime);
-      setValue("id", editRecord.id); // ID フィールドをセット
+      setEditRecords(editRecord)
+      // ここでID フィールドをセット
+      setValue("id", editRecord.id); 
+      console.log("ID set to:", editRecord.id); 
+      setValue("created_at", editRecord.createDate); 
+      //編集モーダル表示
+      setShowEditModal(true)
       onOpen();
-      console.log(editRecord)
     }else {
       console.error(`Record with ID ${id} not found.`);
     }
@@ -61,8 +77,8 @@ function App (){
       //records 配列をループして特定の id を持つレコードを見つける
       const existingRecord = records.find(record => record.id === data.id);
       console.log(existingRecord)
+      //データ編集
       if(existingRecord){
-          // データ編集時
           await updateRecord(data.id, data.studyContent, data.studyTime);
           const updatedRecords = records.map(record => {
             if (record.id === data.id) {
@@ -79,9 +95,7 @@ function App (){
       }   
   
       // ここでリセット
-      reset({ studyContent: '' });
-      reset({ studyTime: 0 });
-      // モーダルを閉じる
+      reset();
       onClose(); 
 
       console.log(records); 
@@ -180,7 +194,9 @@ function App (){
   motionPreset='slideInBottom'>
   <ModalOverlay>
     <ModalContent pb={6}>
-      <ModalHeader data-testid="modal-title">学習記録</ModalHeader>
+      <ModalHeader data-testid="modal-title"> 
+        {editRecords ? "記録編集" : "新規登録"}
+      </ModalHeader>
       <ModalCloseButton/>
       <form onSubmit={handleSubmit(onSubmit)}>
       <ModalBody mx={4}>
