@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { addAllRecords, deleteRecords, getAllRecords, updateRecord } from './utils/supabaseFunctions';
 import {Modal, ModalOverlay, ModalContent,  ModalHeader, ModalCloseButton, ModalBody, Stack, FormControl, FormLabel, Input, ModalFooter,
-  Table,Thead,Tbody,Tr,Th,TableCaption,TableContainer,Td, Spinner,  useDisclosure, Button, Text, } from '@chakra-ui/react'
+  Table,Thead,Tbody,Tr,Th,TableCaption,TableContainer,Td, Spinner,  useDisclosure, Button, Text, FormErrorMessage, } from '@chakra-ui/react'
 import { Record } from './domain/record';
 import { useForm, SubmitHandler } from "react-hook-form";
 
@@ -18,10 +18,6 @@ function App (){
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true)
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const [studyContent, setStudyContent]=useState(``);
-  const [studyTime, setStudyTime]=useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [showEditModal, setShowEditModal] = useState(false);
   const [editRecords, setEditRecords] = useState<Record | null>(null);
   
   //ひとまずデータ取得のみ
@@ -42,11 +38,8 @@ function App (){
 
   //登録ボタン押したらモーダル表示
   const onClickAdd = ()=> {
-    setShowEditModal(false);
-    //ここで初期化しているのにうまくいってない？
     setEditRecords(null);
-    reset({ studyContent: '', studyTime: 0 })
-    console.log("Form reset");
+    reset()
     onOpen()
     console.log(editRecords)
     }
@@ -55,15 +48,12 @@ function App (){
   const onClickEdit = (id: string)=>{
     const editRecord = records.find(record => record.id === id);
     if(editRecord) {
-      setStudyContent(editRecord.studyContent);
-      setStudyTime(editRecord.studyTime);
+      setValue("studyContent", editRecord.studyContent); 
+      setValue("studyTime", editRecord.studyTime); 
       setEditRecords(editRecord)
       // ここでID フィールドをセット
       setValue("id", editRecord.id); 
-      console.log("ID set to:", editRecord.id); 
       setValue("created_at", editRecord.createDate); 
-      //編集モーダル表示
-      setShowEditModal(true)
       onOpen();
     }else {
       console.error(`Record with ID ${id} not found.`);
@@ -80,42 +70,22 @@ function App (){
       //データ編集
       if(existingRecord){
           await updateRecord(data.id, data.studyContent, data.studyTime);
-          const updatedRecords = records.map(record => {
-            if (record.id === data.id) {
-              return { ...record, studyContent: data.studyContent, studyTime: data.studyTime };
-          }
-          return record;
-      });
-      setRecords(updatedRecords);
+          const updatedRecords = records.map(record => (record.id === data.id ? { 
+            ...record, studyContent: data.studyContent, studyTime: data.studyTime
+            } : record));
+          setRecords(updatedRecords);
       } else {
           // データ追加(supabase)
           const addedData = await addAllRecords(data.studyContent, data.studyTime);
-          const newRecord = { id: addedData.id, studyContent: data.studyContent, studyTime: data.studyTime, createDate: addedData.created_at };
-          setRecords([...records, newRecord]);
+          setRecords([...records, { 
+            id: addedData.id, studyContent: data.studyContent, studyTime: data.studyTime, createDate: addedData.created_at 
+          }]);
       }   
-  
       // ここでリセット
       reset();
       onClose(); 
-
-      console.log(records); 
-
   } catch (error) {
       console.error('Failed to submit form data:', error);
-  }
-  };
-
-  
-
-  const onChangeStudyContent = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputContent = event.target.value;
-    setStudyContent(inputContent);
-  };
-  const onChangeStudyTime = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = event.target.value;
-    if (/^\d*$/.test(inputValue)) { // 入力値が数値であることを確認
-      const time = parseInt(inputValue); // 数値に変換
-      setStudyTime(time);
   }
   };
 
@@ -171,6 +141,7 @@ function App (){
         </Td>
         <Td>
         <Button
+          data-testid="edit"
           border='20px'
           borderColor='gray.500'
           colorScheme='teal'
@@ -201,15 +172,19 @@ function App (){
       <form onSubmit={handleSubmit(onSubmit)}>
       <ModalBody mx={4}>
         <Stack spacing ={4}>
-          <FormControl>
+          <FormControl isInvalid={!!errors.studyContent}>
             <FormLabel>学習内容</FormLabel>
-            <Input data-testid="study-content-input" {...register("studyContent", { required: true })} value={studyContent}  onChange={onChangeStudyContent}/>
-            {errors.studyContent && "内容の入力は必須です"}
+            <Input data-testid="study-content-input" {...register("studyContent", { required: true })}/>
+            <FormErrorMessage>
+              {errors.studyContent && "内容の入力は必須です"}
+            </FormErrorMessage>
           </FormControl>
-          <FormControl>
+          <FormControl isInvalid={!!errors.studyTime}>
             <FormLabel>学習時間</FormLabel>
-            <Input data-testid="study-time-input" type="number" {...register("studyTime", { required: true,valueAsNumber: true, min: {  value: 1, message: "0以上で入力してください" } })} value={studyTime}  onChange={onChangeStudyTime} min={0} step={1}/>
+            <Input data-testid="study-time-input" type="number" {...register("studyTime", { required: true,valueAsNumber: true, min: {  value: 1, message: "0以上で入力してください" } })} min={0} step={1}/>
+            <FormErrorMessage>
             {errors.studyTime && "0以上で入力してください" }
+            </FormErrorMessage>
           </FormControl>
         </Stack>
       </ModalBody>
@@ -218,7 +193,6 @@ function App (){
         <Button 
           onClick={() => {
           onClose();
-          reset();
         }}>キャンセル</Button>
       </ModalFooter>
       </form>

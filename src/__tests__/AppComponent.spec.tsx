@@ -17,10 +17,15 @@ const mockDeleteRecords = jest
 .fn()
 .mockResolvedValue([]);
 
+const mockUpdateRecords = jest
+.fn()
+.mockResolvedValue([]);
+
 jest.mock("../utils/supabaseFunctions", () => {
     return{
         getAllRecords:()=>mockGetAllRecords(),
         deleteRecords: () => mockDeleteRecords(),
+        updateRecord:()=>mockUpdateRecords()
     }});
 
 describe("App", () => {
@@ -72,7 +77,7 @@ describe("App", () => {
         fireEvent.click(newSubmitButton);
         await waitFor(()=>{
         const modalTitle = screen.getByTestId("modal-title")
-        expect(modalTitle).toHaveTextContent("学習記録");
+        expect(modalTitle).toHaveTextContent("新規登録");
         })
 });
 
@@ -89,6 +94,7 @@ describe("App", () => {
         const records = screen.getByTestId("table").querySelectorAll("tr")
         expect(records.length-1).toBe(1)
 });
+
     test("学習内容の入力をしないで登録を押すとエラーが表示される", async() => {
         render(<App />)
         // モーダル表示～登録ボタン押下
@@ -147,6 +153,35 @@ describe("App", () => {
             const updatedRecords = screen.queryAllByTestId("table");
             console.log("削除後の学習記録の数:", updatedRecords.length);
             expect(updatedRecords.length).toBe(initialRecords.length - 1);
+        });
+    });
+
+    test("編集モーダルのtitleが記録編集であること", async() => {
+        render(<App />);
+
+        await waitFor(()=>{
+            const editButton = screen.getByTestId("edit");
+            fireEvent.click(editButton);
+    })
+        await waitFor(()=>{
+        const modalTitle = screen.getByTestId("modal-title")
+        expect(modalTitle).toHaveTextContent("記録編集");
+        })
+});
+    test("データを編集すると内容が更新される", async () => {
+        render(<App />);
+        
+        //編集ボタンを押してモーダル表示
+        await waitFor(()=>{
+            const editButton = screen.getByTestId("edit");
+            fireEvent.click(editButton);
+        })
+        const submitButton = screen.getByTestId('submit');
+        fireEvent.click(submitButton);
+        
+        //モックを使ってデータを取得
+        await waitFor(() => {
+            expect(mockUpdateRecords).toHaveBeenCalled();
         });
     });
 
